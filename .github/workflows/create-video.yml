@@ -8,20 +8,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Install FFmpeg
         run: |
           sudo apt update
-          sudo apt install -y ffmpeg
+          sudo apt install -y ffmpeg python3-pip
+
+      - name: Install Piper
+        run: |
+          pip install piper-tts
+
+      - name: Download voice model
+        run: |
+          python -m piper.download_voices en_US-lessac-medium
+
+      - name: Generate voice
+        run: |
+          mkdir -p output
+          cat script.txt | \
+          python -m piper \
+          --model en_US-lessac-medium \
+          --output_file output/voice.wav
 
       - name: Create video
         run: |
-          mkdir output
-
           ffmpeg \
             -f lavfi \
-            -i color=c=black:s=1080x1920:d=10 \
+            -i color=c=black:s=1080x1920:d=12 \
+            -i output/voice.wav \
             -vf "drawtext=text='Did you know? Octopuses have three hearts.':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=(h-text_h)/2" \
             -c:v libx264 \
+            -c:a aac \
+            -shortest \
             -pix_fmt yuv420p \
             output/short.mp4
 
