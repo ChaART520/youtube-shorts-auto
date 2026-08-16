@@ -1,0 +1,32 @@
+name: Create YouTube Short
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-video:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install FFmpeg
+        run: |
+          sudo apt update
+          sudo apt install -y ffmpeg
+
+      - name: Create video
+        run: |
+          mkdir output
+
+          ffmpeg \
+            -f lavfi \
+            -i color=c=black:s=1080x1920:d=10 \
+            -vf "drawtext=text='Did you know? Octopuses have three hearts.':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=(h-text_h)/2" \
+            -c:v libx264 \
+            -pix_fmt yuv420p \
+            output/short.mp4
+
+      - name: Upload video
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-short
+          path: output/short.mp4
